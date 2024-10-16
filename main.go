@@ -30,6 +30,7 @@ func HandleCGI(cfg *Config, args []string) error {
 	res.ProtoMajor = req.ProtoMajor
 	res.ProtoMinor = req.ProtoMinor
 	res.Close = true
+	res.Header = http.Header{}
 
 	// https://www.rfc-editor.org/rfc/rfc3875#section-4
 	os.Setenv("AUTH_TYPE", "")
