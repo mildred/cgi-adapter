@@ -23,6 +23,14 @@ func HandleCGI(cfg *Config, args []string) error {
 		return err
 	}
 
+	res.Status = "200 OK"
+	res.StatusCode = 200
+	res.Request = req
+	res.Proto = req.Proto
+	res.ProtoMajor = req.ProtoMajor
+	res.ProtoMinor = req.ProtoMinor
+	res.Close = true
+
 	// https://www.rfc-editor.org/rfc/rfc3875#section-4
 	os.Setenv("AUTH_TYPE", "")
 	os.Setenv("CONTENT_LENGTH", strconv.FormatInt(req.ContentLength, 10))
@@ -90,7 +98,15 @@ func HandleCGI(cfg *Config, args []string) error {
 
 		h := strings.SplitN(line, ":", 2)
 		if len(h) == 2 {
-			res.Header.Add(h[0], strings.TrimLeft(h[1], " "))
+			if strings.ToLower(h[0]) == "status" {
+				st := strings.Split(h[1], " ")
+				if code, e := strconv.ParseInt(st[0], 10, 0); e != nil {
+					res.StatusCode = int(code)
+					res.Status = h[1]
+				}
+			} else {
+				res.Header.Add(h[0], strings.TrimLeft(h[1], " "))
+			}
 		}
 	}
 
@@ -105,8 +121,6 @@ func HandleCGI(cfg *Config, args []string) error {
 		res.ContentLength = -1
 	}
 
-	res.Request = req
-	res.Close = true
 	res.Body = io.NopCloser(scan)
 
 	res.Write(os.Stdout)
